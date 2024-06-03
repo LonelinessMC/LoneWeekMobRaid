@@ -1,18 +1,18 @@
-package it.loneliness.mc.treasurehunt.Controller;
+package it.loneliness.mc.mobraid.Controller;
 
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import it.loneliness.mc.treasurehunt.Custom.TreasureManager;
+import it.loneliness.mc.mobraid.Model.PeriodicManagerRunner;
 
 public class TaskScheduler {
     private final JavaPlugin plugin;
     private final long periodSeconds;
     private int taskId = -1;
-    private TreasureManager manager;
+    private PeriodicManagerRunner manager;
 
-    public TaskScheduler(JavaPlugin plugin, long periodSeconds, TreasureManager manager) {
+    public TaskScheduler(JavaPlugin plugin, long periodSeconds, PeriodicManagerRunner manager) {
         this.plugin = plugin;
         this.periodSeconds = periodSeconds;
         this.manager = manager;

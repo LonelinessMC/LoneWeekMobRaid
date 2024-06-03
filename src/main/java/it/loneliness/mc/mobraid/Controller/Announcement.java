@@ -1,6 +1,4 @@
-package it.loneliness.mc.treasurehunt.Controller;
-
-import it.loneliness.mc.treasurehunt.Plugin;
+package it.loneliness.mc.mobraid.Controller;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,9 +7,12 @@ import java.util.regex.Pattern;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+
+import it.loneliness.mc.mobraid.Plugin;
+import it.loneliness.mc.mobraid.Model.LogHandler;
+
 import org.bukkit.command.CommandSender;
 
-import it.loneliness.mc.treasurehunt.Model.LogHandler;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ComponentBuilder;

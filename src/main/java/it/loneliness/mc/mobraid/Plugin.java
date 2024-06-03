@@ -1,23 +1,20 @@
-package it.loneliness.mc.treasurehunt;
+package it.loneliness.mc.mobraid;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import it.loneliness.mc.treasurehunt.Controller.CommandHandler;
-import it.loneliness.mc.treasurehunt.Controller.TaskScheduler;
-import it.loneliness.mc.treasurehunt.Custom.TreasureHandler;
-import it.loneliness.mc.treasurehunt.Custom.TreasureManager;
-import it.loneliness.mc.treasurehunt.Model.LogHandler;
+import it.loneliness.mc.mobraid.Controller.CommandHandler;
+import it.loneliness.mc.mobraid.Controller.TaskScheduler;
+import it.loneliness.mc.mobraid.Model.LogHandler;
+import it.loneliness.mc.mobraid.Custom.RaidsManager;
 
 public class Plugin extends JavaPlugin{
     LogHandler logger;
     CommandHandler commandHandler;
     TaskScheduler taskScheduler;
-    private TreasureManager manager;
-    private TreasureHandler treasureHandler;
+    private RaidsManager manager;
     
     @Override
     public void onEnable() {
@@ -34,19 +31,21 @@ public class Plugin extends JavaPlugin{
             logger.setDebug(true);
         }
         
-        manager = new TreasureManager(this, logger);
-        manager.onEnable();
+        manager = new RaidsManager(this, logger);
+        this.getServer().getPluginManager().registerEvents(manager, this);
 
-        treasureHandler = new TreasureHandler(this, logger, manager);
-        PluginManager pluginManager = getServer().getPluginManager();
-        pluginManager.registerEvents(treasureHandler, this);
-
-        //Make sure this is alligned with the plugin.yml, the first in the list is used for the permissions
-        List<String> prefixes = new ArrayList<>(Arrays.asList("treasurehunt", "th"));
-        this.commandHandler = new CommandHandler(this, prefixes, manager);
-        for(String prefix : prefixes){
-            this.getCommand(prefix).setExecutor(commandHandler);
-            this.getCommand(prefix).setTabCompleter(commandHandler);
+        try {
+            //Make sure this is alligned with the plugin.yml, the first in the list is used for the permissions
+            List<String> prefixes = new ArrayList<>(Arrays.asList("mobraid", "mr"));
+            this.commandHandler = new CommandHandler(this, prefixes, manager);
+            for(String prefix : prefixes){
+                this.getCommand(prefix).setExecutor(commandHandler);
+                this.getCommand(prefix).setTabCompleter(commandHandler);
+            }
+        } catch(NullPointerException e){
+            logger.severe("Ensure you're defining the same comands both in plugin.yml as well as in Plugin.java");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
         }
 
         if (!lateValidateConfig()) {
@@ -55,7 +54,7 @@ public class Plugin extends JavaPlugin{
             return;
         }
 
-        this.taskScheduler = new TaskScheduler(this, 60, manager); //in seconds
+        this.taskScheduler = new TaskScheduler(this, 10, manager);
         taskScheduler.start();
     }
 
@@ -63,7 +62,9 @@ public class Plugin extends JavaPlugin{
     public void onDisable() {
         logger.info("Disabling the plugin");
         manager.onDisable();
-        taskScheduler.stop();
+        if(taskScheduler != null && taskScheduler.isRunning()){
+            taskScheduler.stop();
+        }
     }
 
     /**
@@ -80,43 +81,12 @@ public class Plugin extends JavaPlugin{
             return false;
         }
 
-        int a = getConfig().getInt("min-distance-from-center");
-        if (a < 0) {
-            logger.severe("min-distance-from-center invalid!");
-            return false;
-        }
-        int b = getConfig().getInt("max-distance-from-center");
-        if (b < 0) {
-            logger.severe("max-distance-from-center invalid!");
-            return false;
-        }
-
-
-        int c = getConfig().getInt("points-to-opener");
-        if (c < 0) {
-            logger.severe("points-to-opener invalid!");
-            return false;
-        }
-        int d = getConfig().getInt("points-to-close");
-        if (d < 0) {
-            logger.severe("points-to-close invalid!");
-            return false;
-        }
-        int e = getConfig().getInt("close-range");
-        if (e < 0) {
-            logger.severe("close-range invalid!");
-            return false;
-        }
+        // TODO VALIDARE TUTTO
 
         return true;
     }
 
     private boolean lateValidateConfig(){
-        if(!manager.validateAllPrizes()){
-            logger.severe("prizes in prizes-in-treasure are invalid!");
-            return false;
-        }
-
         return true;
     }
 

@@ -1,4 +1,4 @@
-package it.loneliness.mc.treasurehunt.Model;
+package it.loneliness.mc.mobraid.Model;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

@@ -1,4 +1,4 @@
-package it.loneliness.mc.treasurehunt;
+package it.loneliness.mc.mobraid;
 
 public class Constants {
 

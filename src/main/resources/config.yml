@@ -1,5 +1,5 @@
-chat-prefix: "&#FE6847[&#FBB13CLoneWeek TreasureHunt&#FE6847] "
-scoreboard-id: "punteggiotreasurehunt"
+chat-prefix: "&#FE6847[&#FBB13CLoneWeek MobRaid&#FE6847] "
+scoreboard-id: "punteggiomobraid"
 
 min-distance-from-center: 1000
 max-distance-from-center: 3500

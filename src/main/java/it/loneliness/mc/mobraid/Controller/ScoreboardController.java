@@ -1,4 +1,4 @@
-package it.loneliness.mc.treasurehunt.Controller;
+package it.loneliness.mc.mobraid.Controller;
 
 import java.util.List;
 import java.util.Set;
@@ -10,8 +10,8 @@ import org.bukkit.scoreboard.RenderType;
 import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
 
-import it.loneliness.mc.treasurehunt.Model.LogHandler;
-import it.loneliness.mc.treasurehunt.Plugin;
+import it.loneliness.mc.mobraid.Model.LogHandler;
+import it.loneliness.mc.mobraid.Plugin;
 
 /**
  * Handles interactions with the scoreboard api
