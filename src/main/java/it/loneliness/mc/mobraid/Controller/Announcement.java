@@ -35,7 +35,7 @@ public class Announcement {
     private Announcement(Plugin plugin) {
         this.plugin = plugin;
         this.logger = LogHandler.getInstance(null);
-        this.prefix = plugin.getConfig().getString("chat-prefix");
+        this.prefix = plugin.getConfigManager().getString(ConfigManager.CONFIG_ITEMS.CHAT_PREFIX);
     }
 
     public void sendPrivateMessage(List<Player> players, String message) {

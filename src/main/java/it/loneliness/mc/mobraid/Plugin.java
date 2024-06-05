@@ -6,6 +6,7 @@ import java.util.List;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import it.loneliness.mc.mobraid.Controller.CommandHandler;
+import it.loneliness.mc.mobraid.Controller.ConfigManager;
 import it.loneliness.mc.mobraid.Controller.TaskScheduler;
 import it.loneliness.mc.mobraid.Model.LogHandler;
 import it.loneliness.mc.mobraid.Custom.RaidsManager;
@@ -14,6 +15,7 @@ public class Plugin extends JavaPlugin{
     LogHandler logger;
     CommandHandler commandHandler;
     TaskScheduler taskScheduler;
+    ConfigManager configManager;
     private RaidsManager manager;
     
     @Override
@@ -21,13 +23,9 @@ public class Plugin extends JavaPlugin{
         logger = LogHandler.getInstance(getLogger());
         logger.info("Enabling the plugin");
 
-        if (!checkAndLoadConfig()) {
-            logger.severe("Configuration is invalid. Disabling the plugin.");
-            getServer().getPluginManager().disablePlugin(this);
-            return;
-        }
+        configManager = new ConfigManager(this);
 
-        if(getConfig().getBoolean("debug")){
+        if(configManager.getBoolean(ConfigManager.CONFIG_ITEMS.DEBUG)){
             logger.setDebug(true);
         }
         
@@ -48,12 +46,6 @@ public class Plugin extends JavaPlugin{
             return;
         }
 
-        if (!lateValidateConfig()) {
-            logger.severe("Configuration is invalid. Disabling the plugin.");
-            getServer().getPluginManager().disablePlugin(this);
-            return;
-        }
-
         this.taskScheduler = new TaskScheduler(this, 10, manager);
         taskScheduler.start();
     }
@@ -67,30 +59,11 @@ public class Plugin extends JavaPlugin{
         }
     }
 
-    /**
-     * Checks and loads the configuration file.
-     * @return true if the configuration is valid, false otherwise.
-     */
-    private boolean checkAndLoadConfig() {
-        // Save the default config if it does not exist
-        saveDefaultConfig();
-
-        String scoreboardId = getConfig().getString("scoreboard-id");
-        if (scoreboardId.isBlank() || scoreboardId.isEmpty()) {
-            logger.severe("No scoreboard id specified in the config!");
-            return false;
-        }
-
-        // TODO VALIDARE TUTTO
-
-        return true;
-    }
-
-    private boolean lateValidateConfig(){
-        return true;
-    }
-
     public TaskScheduler getTaskScheduler(){
         return this.taskScheduler;
+    }
+
+    public ConfigManager getConfigManager(){
+        return this.configManager;
     }
 }

@@ -27,6 +27,10 @@
         <id>papermc</id>
         <url>https://repo.papermc.io/repository/maven-public/</url>
       </repository>
+      <repository>
+        <id>citizens-repo</id>
+        <url>https://maven.citizensnpcs.co/repo</url>
+    </repository>
   </repositories>
 
   <dependencies>
@@ -54,6 +58,19 @@
       <version>1.0</version>
       <systemPath>${project.basedir}/libraries/Locale-API-1.0.jar</systemPath>
       <scope>system</scope>
+    </dependency>
+       <dependency>
+        <groupId>net.citizensnpcs</groupId>
+        <artifactId>citizens-main</artifactId>
+        <version>2.0.33-SNAPSHOT</version>
+        <type>jar</type>
+        <scope>provided</scope>
+        <exclusions>
+            <exclusion>
+                <groupId>*</groupId>
+                <artifactId>*</artifactId>
+            </exclusion>
+        </exclusions>
     </dependency>
   </dependencies>
 

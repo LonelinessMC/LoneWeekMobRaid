@@ -4,11 +4,14 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
 
 import it.loneliness.mc.mobraid.Plugin;
+import it.loneliness.mc.mobraid.Controller.Announcement;
 import it.loneliness.mc.mobraid.Controller.Metadata;
 
 public class RaidRound {
@@ -21,6 +24,7 @@ public class RaidRound {
     public static String METADATA_RAID_PLAYER_OWNER = "RAID_PLAYER_OWNER";
 
     private Plugin plugin;
+    private Announcement announcement;
     LocalDateTime startedAt;
     STATUS state;
     private int secondsToComplete;
@@ -30,6 +34,7 @@ public class RaidRound {
 
     RaidRound(Plugin plugin, Raid raid, int secondsToComplete){
         this.plugin = plugin;
+        this.announcement = Announcement.getInstance(plugin);
         this.startedAt = null;
         this.state = STATUS.CREATED;
         this.secondsToComplete = secondsToComplete;
@@ -48,11 +53,21 @@ public class RaidRound {
 
         EntityType entityTypeToSpawn = EntityType.valueOf("ZOMBIE");
 
-        for (Player player : this.raid.getPlayers()) {
+        List<Player> players = this.raid.getPlayers();
+
+        for (Player player : players) {
             LivingEntity entity = (LivingEntity) player.getWorld().spawnEntity(player.getLocation(), entityTypeToSpawn);
+            entity.setCustomName("Raid Zombie");
+            entity.setCustomNameVisible(true);
             Metadata.setMetadata(plugin, entity, METADATA_RAID_PLAYER_OWNER, this.raid.getPlayerOwner().getName());
             livingEntities.add(entity);
+            if (entity instanceof Mob) {
+                ((Mob) entity).setTarget(player);
+            }
         }
+
+        //TODO
+        announcement.sendPrivateMessage(players, "Il raid sta iniziando per "+String.join(", ", players.stream().map(p -> p.getName()).toList())+".");
 
         return true;
     }
@@ -62,8 +77,7 @@ public class RaidRound {
             return true;
 
         if(this.isExpired()){
-            this.state = STATUS.FINISHED;
-            this.isWon = false;
+            this.failRound();
             return true;
         }
 
@@ -90,7 +104,29 @@ public class RaidRound {
     }
 
     public void onDisable() {
+        if(Bukkit.isPrimaryThread()){
+            removeAllEntities();
+        } else {
+            Bukkit.getScheduler().runTask(plugin, new Runnable() {
+                @Override
+                public void run() {
+                    removeAllEntities();
+                }
+                
+            });
+        }
+        
+    }
+
+    private void removeAllEntities(){
         this.livingEntities.forEach(le -> le.remove());
+    }
+
+    public void failRound() {
+        this.isWon = false;
+        this.state = STATUS.FINISHED;
+        this.onDisable();
+        return;
     }
 
 }

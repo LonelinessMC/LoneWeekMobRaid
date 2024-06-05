@@ -35,7 +35,7 @@ public class ScoreboardController {
         this.plugin = plugin;
         this.logger = LogHandler.getInstance(null);
 
-        String scoreboardId = this.plugin.getConfig().getString("scoreboard-id");
+        String scoreboardId = plugin.getConfigManager().getString(ConfigManager.CONFIG_ITEMS.SCOREBOARD_ID);
         this.scoreObjective = getOrMakeObjective(scoreboardId, scoreboardId);
     }
 

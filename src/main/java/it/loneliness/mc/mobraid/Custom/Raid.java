@@ -2,10 +2,14 @@ package it.loneliness.mc.mobraid.Custom;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
+import java.util.function.Function;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
-import org.bukkit.Chunk;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import it.loneliness.mc.mobraid.Plugin;
 import it.loneliness.mc.mobraid.Controller.Announcement;
@@ -21,33 +25,126 @@ public class Raid {
     private Plugin plugin;
     private LogHandler logger;
     private Announcement announcement;
-    private Chunk chunk;
+    private Location location;
     private Player player;
     private List<Player> helpers;
     private STATUS state;
     private List<RaidRound> rounds;
     private int currentRoundIndex;
+    private int maxAllowedDistanceSquared;
 
-    Raid(Plugin plugin, LogHandler logger, Chunk chunk, Player player, List<Player> helpers){
+    Raid(Plugin plugin, LogHandler logger, Location location, Player player, List<Player> helpers){
         this.plugin = plugin;
         this.logger = logger;
         this.announcement = Announcement.getInstance(plugin);
-        this.chunk = chunk;
+        this.location = location;
         this.player = player;
         this.helpers = helpers;
         this.state = STATUS.STARTED;
+
+        this.maxAllowedDistanceSquared = 20*20; //todo This needs to be taken from the config;
+
         this.rounds = new ArrayList<RaidRound>();
-        rounds.add(new RaidRound(plugin, this, 40));
+        rounds.add(new RaidRound(plugin, this, 100));
 
 
         this.currentRoundIndex = 0;
         rounds.get(currentRoundIndex).start();
+    }
 
-        //TODO registerChunk to get it loaded
+    public void failRaid(String failMessage){
+        try{
+            RaidRound currentRound = this.rounds.get(this.currentRoundIndex);
+            currentRound.failRound();
+        } catch (IndexOutOfBoundsException e){}
+        announcement.sendPrivateMessage(this.getPlayers(), "RAID lost:" + failMessage);
+        this.state = STATUS.FINISHED;
+    }
+
+    public void winRaid(){
+        announcement.sendPrivateMessage(this.getPlayers(), "RAID won");
+        this.state = STATUS.FINISHED;
+    }
+
+    public void removeHelper(Player helper){
+        this.helpers = this.helpers.stream().filter(h -> !h.equals(helper)).collect(Collectors.toList());
+        announcement.sendPrivateMessage(helper, "Hai abbandonato il raid");
+        announcement.sendPrivateMessage(this.getPlayers(), helper.getName()+" non sta più partecipando al raid");
+    }
+
+    public boolean checkDistance(Player player){
+        double distance = player.getLocation().distanceSquared(location);
+        return (distance > maxAllowedDistanceSquared);
+    }
+    public boolean checkNotOnline(Player player){
+        return Bukkit.getPlayerExact(player.getName()) == null;
+    }
+
+
+    private void runCheck(Function<Player, Boolean> checkFunction, Player subject, String personalWarning, String ownerWarning, String failRaidMsg,
+    String personalOkMessage, String ownerOkMessage) {
+
+        if(checkFunction.apply(subject)){
+            if(personalWarning != null){
+                announcement.sendPrivateMessage(subject, personalWarning.replace("{PLAYER}", subject.getName()));
+            }
+            if(!subject.equals(this.getPlayerOwner()) && ownerWarning != null)
+                announcement.sendPrivateMessage(this.getPlayerOwner(), ownerWarning.replace("{PLAYER}", subject.getName()));
+
+            //wait x seconds if player still far away then fail the task
+            //todo x seconds needes to be a config value
+            Bukkit.getServer().getScheduler().runTaskLater(this.plugin, new Runnable() {
+
+                @Override
+                public void run() {
+                    if(state != STATUS.FINISHED){ //if in the meantime the raid has finished then we're not interested in this check
+                        if(checkFunction.apply(subject)){
+                            if(subject.equals(getPlayerOwner())){
+                                failRaid(failRaidMsg);
+                            } else {
+                                removeHelper(subject);
+                            }
+                        } else {
+                            announcement.sendPrivateMessage(subject, personalOkMessage.replace("{PLAYER}", subject.getName()));
+                            if(!subject.equals(getPlayerOwner()))
+                                announcement.sendPrivateMessage(getPlayerOwner(), ownerOkMessage.replace("{PLAYER}", subject.getName()));
+                        }
+                    }
+                }
+                
+            }, 10*20);
+        }
+
+            
     }
 
     public synchronized void periodicRun() {
+        logger.debug("periodicRun is running");
         if(this.state == STATUS.STARTED){
+
+            for (Player player : this.getPlayers()) {
+
+                this.runCheck(
+                    this::checkNotOnline, 
+                    player, 
+                    null, //this has to be null cause player could be null if not online
+                    null, //this has to be null cause player could be null if not online
+                    "l'owner ha lasciato il server", 
+                    "Sei tornato nel server",
+                    "Il player {PLAYER} è tornato nel server"
+                );
+
+                this.runCheck(
+                    this::checkDistance, 
+                    player, 
+                    "Torna nell'arena", 
+                    "Il player {PLAYER} si sta allontanando dall'arena",
+                    "l'owner ha lasciato l'area di gioco", 
+                    "Sei tornato nell'arena",
+                    "Il player {PLAYER} è tornato nell'arena"
+                );
+            }
+
             RaidRound currentRound = this.rounds.get(this.currentRoundIndex);
             if(currentRound.isFinished()){
                 if(currentRound.isWon()){
@@ -62,11 +159,9 @@ public class Raid {
                 this.currentRoundIndex++;
                 if(this.currentRoundIndex >= this.rounds.size()){
                     if(currentRound.isWon()){
-                        announcement.sendPrivateMessage(player, "RAID won");
-                        //TODO handle player raid win
+                        this.winRaid();
                     } else {
-                        announcement.sendPrivateMessage(player, "RAID lost");
-                        //TODO handle player raid loss
+                        this.failRaid("non avete vinto il round");
                     }
                     this.state = STATUS.FINISHED;
                 } else {
@@ -85,8 +180,9 @@ public class Raid {
     }
 
     public List<Player> getPlayers(){
-        List<Player> output = new ArrayList<>(this.helpers);
-        output.addFirst(player);
+        List<Player> output = new ArrayList<>();
+        output.add(this.getPlayerOwner());
+        output.addAll(this.helpers);
         return output;
     }
 
@@ -99,10 +195,6 @@ public class Raid {
                 return true;
 
         return false;
-    }
-
-    public boolean isChunk(Chunk c){
-        return this.chunk.equals(c);
     }
 
     public Player getPlayerOwner() {
