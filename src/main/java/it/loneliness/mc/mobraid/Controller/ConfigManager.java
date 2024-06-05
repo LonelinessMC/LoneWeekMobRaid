@@ -12,10 +12,12 @@ import java.util.logging.Level;
 public class ConfigManager {
     public enum CONFIG_ITEMS {
         CHAT_PREFIX("chatPrefix", "&#FE6847[&#FBB13CLoneWeek MobRaid&#FE6847] "),
-        DEBUG("debug", true),
         SCOREBOARD_ID("scoreboardId", "punteggiomobraid"),
-        NPC_NAME_SUBSTRING("npcNameSubstring", "Fabbro");
-        //WELCOME_MESSAGES("welcomeMessages", List.of("Welcome!", "Hello!"));
+        NPC_NAME_SUBSTRING("npcNameSubstring", "Fabbro"),
+        SUMMON_RAID_ITEM_TYPE("summonRaidItemType", "zombie_head"),
+        SUMMON_RAID_ITEM_NAME("summonRaidItemName", "RAID generator"),
+        SUMMON_RAID_ITEM_LORE("summonRaidItemLore", List.of("Piazza questo item per iniziare un raid!", "")),
+        DEBUG("debug", true);
 
         private final String key;
         private final Object defaultValue;
