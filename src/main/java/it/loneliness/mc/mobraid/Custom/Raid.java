@@ -13,6 +13,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import it.loneliness.mc.mobraid.Plugin;
 import it.loneliness.mc.mobraid.Controller.Announcement;
+import it.loneliness.mc.mobraid.Controller.ConfigManager;
 import it.loneliness.mc.mobraid.Model.LogHandler;
 
 public class Raid {
@@ -33,7 +34,7 @@ public class Raid {
     private int currentRoundIndex;
     private int maxAllowedDistanceSquared;
 
-    Raid(Plugin plugin, LogHandler logger, Location location, Player player, List<Player> helpers){
+    Raid(Plugin plugin, LogHandler logger, Location location, Player player, List<Player> helpers, List<RaidRoundConfig> raidRoundConfigs){
         this.plugin = plugin;
         this.logger = logger;
         this.announcement = Announcement.getInstance(plugin);
@@ -42,11 +43,12 @@ public class Raid {
         this.helpers = helpers;
         this.state = STATUS.STARTED;
 
-        this.maxAllowedDistanceSquared = 20*20; //todo This needs to be taken from the config;
+        // ^2 to compensate for distanceSquared
+        this.maxAllowedDistanceSquared = this.plugin.getConfigManager().getInt(ConfigManager.CONFIG_ITEMS.ARENA_RADIUS)*this.plugin.getConfigManager().getInt(ConfigManager.CONFIG_ITEMS.ARENA_RADIUS);
 
         this.rounds = new ArrayList<RaidRound>();
-        rounds.add(new RaidRound(plugin, this, 100));
 
+        raidRoundConfigs.forEach(raidRoundConfig -> rounds.add(new RaidRound(plugin, this, raidRoundConfig)));
 
         this.currentRoundIndex = 0;
         rounds.get(currentRoundIndex).start();
@@ -91,8 +93,7 @@ public class Raid {
             if(!subject.equals(this.getPlayerOwner()) && ownerWarning != null)
                 announcement.sendPrivateMessage(this.getPlayerOwner(), ownerWarning.replace("{PLAYER}", subject.getName()));
 
-            //wait x seconds if player still far away then fail the task
-            //todo x seconds needes to be a config value
+            //wait INFRINGMENT_TIMEOUT_SECONDS seconds if player still infringing rules
             Bukkit.getServer().getScheduler().runTaskLater(this.plugin, new Runnable() {
 
                 @Override
@@ -112,7 +113,7 @@ public class Raid {
                     }
                 }
                 
-            }, 10*20);
+            }, this.plugin.getConfigManager().getInt(ConfigManager.CONFIG_ITEMS.INFRINGMENT_TIMEOUT_SECONDS)*20); // *20 because every second has 20 ticks
         }
 
             
@@ -199,5 +200,9 @@ public class Raid {
 
     public Player getPlayerOwner() {
         return this.player;
+    }
+
+    public Location getLocation() {
+        return this.location;
     }
 }

@@ -3,8 +3,10 @@ package it.loneliness.mc.mobraid.Custom;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
@@ -15,6 +17,24 @@ import it.loneliness.mc.mobraid.Controller.Announcement;
 import it.loneliness.mc.mobraid.Controller.Metadata;
 
 public class RaidRound {
+    private static final Random RANDOM = new Random();
+
+    public static Location getRandomLocationWithinRadius(Location origin, double radius) {
+        // Generate a random angle in radians
+        double angle = RANDOM.nextDouble() * 2 * Math.PI;
+
+        // Generate a random distance from the origin, ensuring it is within the radius
+        double distance = RANDOM.nextDouble() * radius;
+
+        // Calculate the new X and Z offsets
+        double xOffset = distance * Math.cos(angle);
+        double zOffset = distance * Math.sin(angle);
+
+        // Create the new location with the same Y as the original
+        return origin.clone().add(xOffset, 0.5, zOffset);
+    }
+
+
     public static enum STATUS {
         CREATED,
         STARTED,
@@ -27,17 +47,17 @@ public class RaidRound {
     private Announcement announcement;
     LocalDateTime startedAt;
     STATUS state;
-    private int secondsToComplete;
     private Raid raid;
     private List<LivingEntity> livingEntities;
     private boolean isWon;
+    private RaidRoundConfig roundConfig;
 
-    RaidRound(Plugin plugin, Raid raid, int secondsToComplete){
+    RaidRound(Plugin plugin, Raid raid, RaidRoundConfig config){
         this.plugin = plugin;
         this.announcement = Announcement.getInstance(plugin);
         this.startedAt = null;
         this.state = STATUS.CREATED;
-        this.secondsToComplete = secondsToComplete;
+        this.roundConfig = config;
         this.raid = raid;
         this.isWon = true;
     }
@@ -50,23 +70,35 @@ public class RaidRound {
         this.state = STATUS.STARTED;
         this.startedAt = LocalDateTime.now();
         this.livingEntities = new ArrayList<LivingEntity>();
-
-        EntityType entityTypeToSpawn = EntityType.valueOf("ZOMBIE");
-
         List<Player> players = this.raid.getPlayers();
 
-        for (Player player : players) {
-            LivingEntity entity = (LivingEntity) player.getWorld().spawnEntity(player.getLocation(), entityTypeToSpawn);
-            entity.setCustomName("Raid Zombie");
-            entity.setCustomNameVisible(true);
-            Metadata.setMetadata(plugin, entity, METADATA_RAID_PLAYER_OWNER, this.raid.getPlayerOwner().getName());
-            livingEntities.add(entity);
-            if (entity instanceof Mob) {
-                ((Mob) entity).setTarget(player);
+        for(RaidRoundEntityConfig entityConfig : roundConfig.getMobsToSpawn()){
+            for(int i=0; i<entityConfig.getHowMany(); i++){
+                if(entityConfig.isOnePerPlayer()){
+                    for (Player player : players) {
+                        LivingEntity entity = (LivingEntity) player.getWorld().spawnEntity(RaidRound.getRandomLocationWithinRadius(player.getLocation(), 10), entityConfig.getType());
+                        entity.setCustomName(entityConfig.getName());
+                        entity.setCustomNameVisible(true);
+                        Metadata.setMetadata(plugin, entity, METADATA_RAID_PLAYER_OWNER, this.raid.getPlayerOwner().getName());
+                        livingEntities.add(entity);
+                        if (entity instanceof Mob) {
+                            ((Mob) entity).setTarget(player);
+                        }
+                    }
+                } else {
+                    LivingEntity entity = (LivingEntity) raid.getLocation().getWorld().spawnEntity(RaidRound.getRandomLocationWithinRadius(raid.getLocation(), 20), entityConfig.getType());
+                    entity.setCustomName(entityConfig.getName());
+                    entity.setCustomNameVisible(true);
+                    Metadata.setMetadata(plugin, entity, METADATA_RAID_PLAYER_OWNER, this.raid.getPlayerOwner().getName());
+                    livingEntities.add(entity);
+                    if (entity instanceof Mob) {
+                        ((Mob) entity).setTarget(raid.getPlayerOwner());
+                    }
+                }
             }
         }
 
-        //TODO
+        // TODO improve messaging 
         announcement.sendPrivateMessage(players, "Il raid sta iniziando per "+String.join(", ", players.stream().map(p -> p.getName()).toList())+".");
 
         return true;
@@ -94,7 +126,7 @@ public class RaidRound {
     }
 
     boolean isExpired(){
-        LocalDateTime endTime = startedAt.plusSeconds(secondsToComplete);
+        LocalDateTime endTime = startedAt.plusSeconds(roundConfig.getSecondsToComplete());
         LocalDateTime currentTime = LocalDateTime.now();
         return currentTime.isAfter(endTime);
     }

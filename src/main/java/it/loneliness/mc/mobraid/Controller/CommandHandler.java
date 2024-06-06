@@ -44,7 +44,7 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
     }
 
     private boolean runRequestRaid(CommandParams params){
-        this.manager.requestNewRaid((Player) params.sender);
+        this.manager.requestNewRaid((Player) params.sender, ((Player) params.sender).getLocation());
         return true;
     }
 

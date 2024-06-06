@@ -67,6 +67,14 @@ public class Announcement {
         p.sendMessage(applyFormat(this.prefix + message));
     }
 
+    public void sendTitle(Player p, String title, String subtitle ) {
+        sendTitle(p, title, subtitle, 10, 70, 20);
+    }
+
+    public void sendTitle(Player p, String title, String subtitle, int fadeIn, int stay, int fadeOut) {
+        p.sendTitle(applyFormat(title), applyFormat(subtitle), fadeIn, stay, fadeOut);
+    }
+
     public void sendPrivateMessage(Player p, ComponentBuilder message) {
         // Create a new ComponentBuilder to prepend the prefix
         ComponentBuilder prefixedMessage = new ComponentBuilder()

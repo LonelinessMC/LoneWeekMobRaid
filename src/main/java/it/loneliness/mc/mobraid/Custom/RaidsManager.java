@@ -52,20 +52,18 @@ public class RaidsManager extends PeriodicManagerRunner implements Listener {
         this.summonRaidItemFactory = new SummonRaidItemFactory(plugin);
     }
 
-    public RaidRequest requestNewRaid(Player p) {
+    public RaidRequest requestNewRaid(Player p, Location l) {
         // TODO: check everything such as if the player is already
         // if area is free enough etc. Invalid world
         if (false) {
             return new RaidRequestFailure(RaidRequestFailure.FailureReason.CHUNK_ALREADY_IN_RAID);
         }
 
-        Location l = p.getLocation();
-
-        // TODO MAKE THIS RADIUS A VARIABLE
-        List<Player> otherPlayers = p.getWorld().getNearbyEntities(l, 20, 20, 20).stream()
+        int distanceRadius = this.plugin.getConfigManager().getInt(ConfigManager.CONFIG_ITEMS.FRIENDS_RADIUS);
+        List<Player> otherPlayers = p.getWorld().getNearbyEntities(l, distanceRadius, distanceRadius, distanceRadius).stream()
                 .filter(i -> (i instanceof Player) && !i.equals(p)).map(i -> ((Player) i)).toList();
 
-        Raid r = new Raid(this.plugin, this.logger, l, p, otherPlayers);
+        Raid r = new Raid(this.plugin, this.logger, l, p, otherPlayers, this.plugin.getConfigManager().getRaidRoundConfigs());
 
         ongoingRaids.add(r);
 
@@ -96,7 +94,6 @@ public class RaidsManager extends PeriodicManagerRunner implements Listener {
 
     @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
-        // TODO if the killer is not partecipating then the Raid should be over and lost
         if (Metadata.hasMetadata(event.getEntity(), RaidRound.METADATA_RAID_PLAYER_OWNER)) {
             LivingEntity entity = (LivingEntity) event.getEntity();
             String playerName = Metadata.getMetadataString(plugin, entity, RaidRound.METADATA_RAID_PLAYER_OWNER);
@@ -143,9 +140,10 @@ public class RaidsManager extends PeriodicManagerRunner implements Listener {
     public void onBlockPlace(BlockPlaceEvent event) {
         Player p = event.getPlayer();
         if (p != null && summonRaidItemFactory.isItem(event.getItemInHand())) {
-            //TODO handle event start
-            announcement.sendPrivateMessage(p, "You cannot start the event now");
-            event.setCancelled(true);
+            Location l = event.getBlock().getLocation();
+            if(l != null){
+                this.requestNewRaid(p, l);
+            }
         }
     }
 
