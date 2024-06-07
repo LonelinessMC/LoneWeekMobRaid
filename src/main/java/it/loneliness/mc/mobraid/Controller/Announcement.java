@@ -67,6 +67,10 @@ public class Announcement {
         p.sendMessage(applyFormat(this.prefix + message));
     }
 
+    public void sendTitle(List<Player> ps, String title, String subtitle ) {
+        ps.forEach(p -> sendTitle(p, title, subtitle, 10, 70, 20));
+    }
+
     public void sendTitle(Player p, String title, String subtitle ) {
         sendTitle(p, title, subtitle, 10, 70, 20);
     }

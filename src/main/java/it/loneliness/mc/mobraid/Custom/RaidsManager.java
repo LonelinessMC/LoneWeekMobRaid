@@ -61,7 +61,7 @@ public class RaidsManager extends PeriodicManagerRunner implements Listener {
 
         int distanceRadius = this.plugin.getConfigManager().getInt(ConfigManager.CONFIG_ITEMS.FRIENDS_RADIUS);
         List<Player> otherPlayers = p.getWorld().getNearbyEntities(l, distanceRadius, distanceRadius, distanceRadius).stream()
-                .filter(i -> (i instanceof Player) && !i.equals(p)).map(i -> ((Player) i)).toList();
+                .filter(i -> (i instanceof Player) && !i.equals(p) && !i.hasMetadata("NPC")).map(i -> ((Player) i)).toList();
 
         Raid r = new Raid(this.plugin, this.logger, l, p, otherPlayers, this.plugin.getConfigManager().getRaidRoundConfigs());
 
@@ -117,7 +117,7 @@ public class RaidsManager extends PeriodicManagerRunner implements Listener {
         if (npcSubstringName != null)
             if (event.getNPC().getName().toLowerCase().contains(npcSubstringName)) {
                 Player p = event.getClicker();
-                if (p != null) {
+                if (p != null) { //TODO if enabled
                     giveNewRaidItem(p);
                 }
             }

@@ -14,6 +14,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import it.loneliness.mc.mobraid.Plugin;
 import it.loneliness.mc.mobraid.Controller.Announcement;
 import it.loneliness.mc.mobraid.Controller.ConfigManager;
+import it.loneliness.mc.mobraid.Controller.ConfigManager.CONFIG_ITEMS;
 import it.loneliness.mc.mobraid.Model.LogHandler;
 
 public class Raid {
@@ -52,13 +53,20 @@ public class Raid {
 
         this.currentRoundIndex = 0;
         rounds.get(currentRoundIndex).start();
+
+        announcement.sendTitle(this.getPlayers(), this.plugin.getConfigManager().getString(CONFIG_ITEMS.RAID_STARTING_TITLE), "");
     }
 
     public void failRaid(String failMessage){
         try{
             RaidRound currentRound = this.rounds.get(this.currentRoundIndex);
-            currentRound.failRound();
+            currentRound.failRound(failMessage);
         } catch (IndexOutOfBoundsException e){}
+        announcement.sendTitle(
+            this.getPlayers(), 
+            this.plugin.getConfigManager().getString(CONFIG_ITEMS.RAID_LOST_TITLE), 
+            failMessage
+        );
         announcement.sendPrivateMessage(this.getPlayers(), "RAID lost:" + failMessage);
         this.state = STATUS.FINISHED;
     }
@@ -130,42 +138,54 @@ public class Raid {
                     player, 
                     null, //this has to be null cause player could be null if not online
                     null, //this has to be null cause player could be null if not online
-                    "l'owner ha lasciato il server", 
-                    "Sei tornato nel server",
-                    "Il player {PLAYER} è tornato nel server"
+                    this.plugin.getConfigManager().getString(CONFIG_ITEMS.RAID_LOST_OWNER_LEAVE_SERVER_SUBTITLE), 
+                    this.plugin.getConfigManager().getString(CONFIG_ITEMS.INFO_PERSONAL_BACK_ONLINE),
+                    this.plugin.getConfigManager().getString(CONFIG_ITEMS.INFO_OWNER_BACK_ONLINE)
                 );
 
                 this.runCheck(
                     this::checkDistance, 
                     player, 
-                    "Torna nell'arena", 
-                    "Il player {PLAYER} si sta allontanando dall'arena",
-                    "l'owner ha lasciato l'area di gioco", 
-                    "Sei tornato nell'arena",
-                    "Il player {PLAYER} è tornato nell'arena"
+                    this.plugin.getConfigManager().getString(CONFIG_ITEMS.WARNING_PERSONAL_TOO_FAR), 
+                    this.plugin.getConfigManager().getString(CONFIG_ITEMS.WARNING_OWNER_TOO_FAR),
+                    this.plugin.getConfigManager().getString(CONFIG_ITEMS.RAID_LOST_OWNER_LEAVE_ARENA_SUBTITLE), 
+                    this.plugin.getConfigManager().getString(CONFIG_ITEMS.INFO_PERSONAL_NOT_TOO_FAR),
+                    this.plugin.getConfigManager().getString(CONFIG_ITEMS.INFO_OWNER_NOT_TOO_FAR)
                 );
             }
 
             RaidRound currentRound = this.rounds.get(this.currentRoundIndex);
             if(currentRound.isFinished()){
+                boolean isRaidFinished = this.currentRoundIndex+1 >= this.rounds.size();
                 if(currentRound.isWon()){
-                    announcement.sendPrivateMessage(player, "Round won");
-                    //TODO handle player round win
+                    if(isRaidFinished){
+                        this.winRaid();
+                        this.state = STATUS.FINISHED;
+                        announcement.sendTitle(
+                            this.getPlayers(), 
+                            this.plugin.getConfigManager().getString(CONFIG_ITEMS.RAID_WON_TITLE), 
+                            this.plugin.getConfigManager().getString(CONFIG_ITEMS.RAID_WON_SUBTITLE).replace("{punti}", 1+"") //TODO aggiungere punti
+                        );
+
+                        //TODO GIVE PRIZES
+                        
+                    } else {
+                        announcement.sendTitle(
+                            this.getPlayers(), 
+                            this.plugin.getConfigManager().getString(CONFIG_ITEMS.ROUND_WON_TITLE).replace("{round}", (this.currentRoundIndex+1)+""),  
+                            this.plugin.getConfigManager().getString(CONFIG_ITEMS.ROUND_WON_SUBTITLE)
+                        );
+                    }
 
                 } else {
-                    announcement.sendPrivateMessage(player, "Round lost");
-                    //TODO handle player roudn loss
+                    this.failRaid(currentRound.getFailReason()); //TODO non deve essere una stringa
+                    this.state = STATUS.FINISHED;
+
+                    //TODO GIVE PARTIAL PRIZES
                 }
 
                 this.currentRoundIndex++;
-                if(this.currentRoundIndex >= this.rounds.size()){
-                    if(currentRound.isWon()){
-                        this.winRaid();
-                    } else {
-                        this.failRaid("non avete vinto il round");
-                    }
-                    this.state = STATUS.FINISHED;
-                } else {
+                if(!isRaidFinished){
                     this.rounds.get(this.currentRoundIndex).start();
                 }
             }

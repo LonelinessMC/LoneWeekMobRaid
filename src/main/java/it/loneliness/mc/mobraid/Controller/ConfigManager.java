@@ -21,6 +21,25 @@ public class ConfigManager {
         CHAT_PREFIX("chatPrefix", "&#FE6847[&#FBB13CLoneWeek MobRaid&#FE6847] "),
         SCOREBOARD_ID("scoreboardId", "punteggiomobraid"),
         NPC_NAME_SUBSTRING("npcNameSubstring", "Fabbro"),
+
+        RAID_STARTING_TITLE("raidStartTitle", "Il raid sta per iniziare!"),
+        RAID_WON_TITLE("raidWonTitle", "Hai vinto il Raid!"),
+        RAID_WON_SUBTITLE("raidWonTitle", "Hai ricevuto {punti} punti"),
+        ROUND_WON_TITLE("roundWonTitle", "Hai superato il {round}° round!"),
+        ROUND_WON_SUBTITLE("roundWonSubtitle", "A breve avrà inizio il nuovo round"),
+        RAID_LOST_TITLE("raidLostTitle", "Hai perso il Raid!"),
+        RAID_LOST_OWNER_LEAVE_SERVER_SUBTITLE("raidLostOwnerLeaveSubtitle", "l'owner ha lasciato il server"),
+        RAID_LOST_OWNER_LEAVE_ARENA_SUBTITLE("raidLostOwnerLeaveSubtitle", "l'owner ha lasciato l'arena di gioco"),
+        ROUND_LOST_EXPIRED_TIME_SUBTITLE("raidLostExpiredTimeSubtitle", "E' scaduto il tempo disponibile"),
+
+        INFO_PERSONAL_BACK_ONLINE("infoPersonalBackOnline", "Sei tornato nel server"),
+        INFO_OWNER_BACK_ONLINE("infoOwnerBackOnline", "Il player {PLAYER} è tornato nel server"),
+
+        WARNING_PERSONAL_TOO_FAR("warningPersonalTooFar", "Torna nell'arena"),
+        WARNING_OWNER_TOO_FAR("warningOwnerTooFar", "Il player {PLAYER} si sta allontanando dall'arena"),
+        INFO_PERSONAL_NOT_TOO_FAR("infoPersonalNotTooFar", "Sei tornato nell'arena"),
+        INFO_OWNER_NOT_TOO_FAR("infoOwnerNotTooFar", "Il player {PLAYER} è tornato nell'arena"),
+
         ARENA_RADIUS("arenaRadius", 30),
         FRIENDS_RADIUS("friendsRadius", 30),
         INFRINGMENT_TIMEOUT_SECONDS("infringmentTimeoutSeconds", 10),
