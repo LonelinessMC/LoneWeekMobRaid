@@ -102,4 +102,8 @@ public class ScoreboardController {
         return objective;
     }
 
+    public void incrementScore(List<String> players, int points) {
+        players.forEach(p -> incrementScore(p, points));
+    }
+
 }

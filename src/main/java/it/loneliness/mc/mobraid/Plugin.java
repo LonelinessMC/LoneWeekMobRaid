@@ -17,6 +17,7 @@ public class Plugin extends JavaPlugin{
     TaskScheduler taskScheduler;
     ConfigManager configManager;
     private RaidsManager manager;
+    boolean enabled;
     
     @Override
     public void onEnable() {

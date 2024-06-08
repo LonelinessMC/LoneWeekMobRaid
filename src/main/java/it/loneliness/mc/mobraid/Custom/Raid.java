@@ -14,6 +14,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import it.loneliness.mc.mobraid.Plugin;
 import it.loneliness.mc.mobraid.Controller.Announcement;
 import it.loneliness.mc.mobraid.Controller.ConfigManager;
+import it.loneliness.mc.mobraid.Controller.ScoreboardController;
 import it.loneliness.mc.mobraid.Controller.ConfigManager.CONFIG_ITEMS;
 import it.loneliness.mc.mobraid.Model.LogHandler;
 
@@ -58,22 +59,49 @@ public class Raid {
     }
 
     public void failRaid(String failMessage){
-        try{
-            RaidRound currentRound = this.rounds.get(this.currentRoundIndex);
-            currentRound.failRound(failMessage);
-        } catch (IndexOutOfBoundsException e){}
-        announcement.sendTitle(
-            this.getPlayers(), 
-            this.plugin.getConfigManager().getString(CONFIG_ITEMS.RAID_LOST_TITLE), 
-            failMessage
-        );
-        announcement.sendPrivateMessage(this.getPlayers(), "RAID lost:" + failMessage);
-        this.state = STATUS.FINISHED;
+        try {
+            try{
+                RaidRound currentRound = this.rounds.get(this.currentRoundIndex);
+                currentRound.failRound(failMessage);
+            } catch (IndexOutOfBoundsException e){}
+    
+            int wonPoints = this.getWonPoints();
+            ScoreboardController.getInstance(this.plugin).incrementScore(this.getPlayers().stream().map(Player::getName).toList(), wonPoints);    
+    
+            String failSubtitle = wonPoints > 0 ? 
+                this.plugin.getConfigManager().getString(CONFIG_ITEMS.RAID_LOST_SOME_POINTS_SUBTITLE).replace("{POINTS}", wonPoints+"") : 
+                this.plugin.getConfigManager().getString(CONFIG_ITEMS.RAID_LOST_NO_POINTS_SUBTITLE);
+            
+            announcement.sendTitle(
+                this.getPlayers(), 
+                this.plugin.getConfigManager().getString(CONFIG_ITEMS.RAID_LOST_TITLE), 
+                failSubtitle
+            );
+            announcement.sendPrivateMessage(this.getPlayers(), this.plugin.getConfigManager().getString(CONFIG_ITEMS.RAID_LOST_REASON_PREFIX) + failMessage);
+            
+        } finally {
+            this.state = STATUS.FINISHED;
+        }
     }
 
     public void winRaid(){
-        announcement.sendPrivateMessage(this.getPlayers(), "RAID won");
-        this.state = STATUS.FINISHED;
+        try {
+            int wonPoints = this.getWonPoints();
+            ScoreboardController.getInstance(this.plugin).incrementScore(this.getPlayers().stream().map(Player::getName).toList(), wonPoints);
+            announcement.sendTitle(
+                this.getPlayers(), 
+                this.plugin.getConfigManager().getString(CONFIG_ITEMS.RAID_WON_TITLE), 
+                this.plugin.getConfigManager().getString(CONFIG_ITEMS.RAID_WON_SUBTITLE).replace("{POINTS}", wonPoints+"")
+            );
+    
+            announcement.announce(
+                this.plugin.getConfigManager().getString(CONFIG_ITEMS.RAID_WON_ANNOUNCEMENT)
+                .replace("{PLAYERS}", String.join(", ", this.getPlayers().stream().map(Player::getName).toList()))
+                .replace("{POINTS}", wonPoints+"")
+            );            
+        } finally {
+            this.state = STATUS.FINISHED;
+        }
     }
 
     public void removeHelper(Player helper){
@@ -160,28 +188,17 @@ public class Raid {
                 if(currentRound.isWon()){
                     if(isRaidFinished){
                         this.winRaid();
-                        this.state = STATUS.FINISHED;
-                        announcement.sendTitle(
-                            this.getPlayers(), 
-                            this.plugin.getConfigManager().getString(CONFIG_ITEMS.RAID_WON_TITLE), 
-                            this.plugin.getConfigManager().getString(CONFIG_ITEMS.RAID_WON_SUBTITLE).replace("{punti}", 1+"") //TODO aggiungere punti
-                        );
-
-                        //TODO GIVE PRIZES
-                        
                     } else {
                         announcement.sendTitle(
                             this.getPlayers(), 
-                            this.plugin.getConfigManager().getString(CONFIG_ITEMS.ROUND_WON_TITLE).replace("{round}", (this.currentRoundIndex+1)+""),  
+                            this.plugin.getConfigManager().getString(CONFIG_ITEMS.ROUND_WON_TITLE).replace("{ROUND}", (this.currentRoundIndex+1)+""),  
                             this.plugin.getConfigManager().getString(CONFIG_ITEMS.ROUND_WON_SUBTITLE)
                         );
                     }
 
                 } else {
-                    this.failRaid(currentRound.getFailReason()); //TODO non deve essere una stringa
+                    this.failRaid(currentRound.getFailReason());
                     this.state = STATUS.FINISHED;
-
-                    //TODO GIVE PARTIAL PRIZES
                 }
 
                 this.currentRoundIndex++;
@@ -190,6 +207,10 @@ public class Raid {
                 }
             }
         }
+    }
+
+    public int getWonPoints(){
+        return this.rounds.stream().filter(RaidRound::isWon).map(round -> round.getRaidRoundConfig().getPointsIfWinRound()).reduce(0, Integer::sum);
     }
 
     public void onDisable() {

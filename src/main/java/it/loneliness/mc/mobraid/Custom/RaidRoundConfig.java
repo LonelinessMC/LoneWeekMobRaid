@@ -6,14 +6,20 @@ public class RaidRoundConfig {
 
     List<RaidRoundEntityConfig> mobsToSpawn;
     int secondsToComplete;
+    private int pointsIfWinRound;
 
-    public RaidRoundConfig(List<RaidRoundEntityConfig> list, int secondsToComplete){
+    public RaidRoundConfig(List<RaidRoundEntityConfig> list, int secondsToComplete, int pointsIfWinRound){
         this.mobsToSpawn = list;
         this.secondsToComplete = secondsToComplete;
+        this.pointsIfWinRound = pointsIfWinRound;
     }
 
     public int getSecondsToComplete() {
         return secondsToComplete;
+    }
+
+    public int getPointsIfWinRound() {
+        return pointsIfWinRound;
     }
 
     public List<RaidRoundEntityConfig> getMobsToSpawn(){

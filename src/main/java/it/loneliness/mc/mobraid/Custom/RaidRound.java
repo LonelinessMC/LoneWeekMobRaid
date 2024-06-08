@@ -7,10 +7,16 @@ import java.util.Random;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Skeleton;
+import org.bukkit.entity.Zombie;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import it.loneliness.mc.mobraid.Plugin;
 import it.loneliness.mc.mobraid.Controller.Announcement;
@@ -33,6 +39,16 @@ public class RaidRound {
 
         // Create the new location with the same Y as the original
         return origin.clone().add(xOffset, 2, zOffset);
+    }
+
+    public static Location getRandomLocationTryingAir(Location origin, double raidus) {
+        for(int attempt = 0; attempt < 3; attempt++){
+            Location loc = getRandomLocationTryingAir(origin, raidus);
+            if(loc.getBlock().isEmpty()){
+                return loc;
+            }
+        }
+        return getRandomLocationTryingAir(origin, 1);
     }
 
 
@@ -84,24 +100,10 @@ public class RaidRound {
                     for(int i=0; i<entityConfig.getHowMany(); i++){
                         if(entityConfig.isOnePerPlayer()){
                             for (Player player : players) {
-                                LivingEntity entity = (LivingEntity) player.getWorld().spawnEntity(RaidRound.getRandomLocationWithinRadius(player.getLocation(), 10), entityConfig.getType());
-                                entity.setCustomName(entityConfig.getName());
-                                entity.setCustomNameVisible(true);
-                                Metadata.setMetadata(plugin, entity, METADATA_RAID_PLAYER_OWNER, raid.getPlayerOwner().getName());
-                                livingEntities.add(entity);
-                                if (entity instanceof Mob) {
-                                    ((Mob) entity).setTarget(player);
-                                }
+                                spawnEntity(player.getLocation(), entityConfig, player);
                             }
                         } else {
-                            LivingEntity entity = (LivingEntity) raid.getLocation().getWorld().spawnEntity(RaidRound.getRandomLocationWithinRadius(raid.getLocation(), 20), entityConfig.getType());
-                            entity.setCustomName(entityConfig.getName());
-                            entity.setCustomNameVisible(true);
-                            Metadata.setMetadata(plugin, entity, METADATA_RAID_PLAYER_OWNER, raid.getPlayerOwner().getName());
-                            livingEntities.add(entity);
-                            if (entity instanceof Mob) {
-                                ((Mob) entity).setTarget(raid.getPlayerOwner());
-                            }
+                            spawnEntity(raid.getLocation(), entityConfig, raid.getPlayerOwner());
                         }
                     }
                 }
@@ -109,10 +111,34 @@ public class RaidRound {
             
         });
 
-        // TODO improve messaging 
-        announcement.sendPrivateMessage(players, "Il raid sta iniziando per "+String.join(", ", players.stream().map(p -> p.getName()).toList())+".");
+        announcement.sendPrivateMessage(players, 
+            this.plugin.getConfigManager().getString(CONFIG_ITEMS.NEW_ROUND_STARTING)
+                .replace("{PLAYERS}", String.join(", ", players.stream().map(Player::getName).toList()))
+        );
 
         return true;
+    }
+
+    private void spawnEntity(Location location, RaidRoundEntityConfig entityConfig, Player target) {
+        LivingEntity entity = (LivingEntity) location.getWorld().spawnEntity(RaidRound.getRandomLocationTryingAir(location, 10), entityConfig.getType());
+        entity.setCustomName(entityConfig.getName());
+        entity.setCustomNameVisible(true);
+        entity.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 60, 1, true, false, false));
+
+        // prevent fall damage on spawn
+        Metadata.setMetadata(plugin, entity, METADATA_RAID_PLAYER_OWNER, raid.getPlayerOwner().getName());
+
+        // prevent mob from taking damage from the sun
+        if (entity instanceof Zombie || entity instanceof Skeleton) {
+            ItemStack helmet = new ItemStack(Material.LEATHER_HELMET);
+            entity.getEquipment().setHelmet(helmet);
+            entity.getEquipment().setHelmetDropChance(0.0f); // Ensure the helmet is not dropped on death
+        }
+
+        livingEntities.add(entity);
+        if (entity instanceof Mob) {
+            ((Mob) entity).setTarget(target);
+        }
     }
 
     boolean isFinished(){
@@ -175,6 +201,10 @@ public class RaidRound {
 
     public String getFailReason(){
         return this.failReason;
+    }
+
+    public RaidRoundConfig getRaidRoundConfig(){
+        return this.roundConfig;
     }
 
 }

@@ -24,8 +24,10 @@ public class ConfigManager {
 
         RAID_STARTING_TITLE("raidStartTitle", "Il raid sta per iniziare!"),
         RAID_WON_TITLE("raidWonTitle", "Hai vinto il Raid!"),
-        RAID_WON_SUBTITLE("raidWonTitle", "Hai ricevuto {punti} punti"),
-        ROUND_WON_TITLE("roundWonTitle", "Hai superato il {round}° round!"),
+        RAID_WON_SUBTITLE("raidWonTitle", "Hai ricevuto {POINTS} punti"),
+        RAID_WON_ANNOUNCEMENT("raidWonAnnouncement", "{PLAYERS} hanno completato il raid e hanno vinto {POINTS} punti"),
+        NEW_ROUND_STARTING("newRoundStarting", "Un nuovo round sta iniziando per: {players}"),
+        ROUND_WON_TITLE("roundWonTitle", "Hai superato il {ROUND}° round!"),
         ROUND_WON_SUBTITLE("roundWonSubtitle", "A breve avrà inizio il nuovo round"),
         RAID_LOST_TITLE("raidLostTitle", "Hai perso il Raid!"),
         RAID_LOST_OWNER_LEAVE_SERVER_SUBTITLE("raidLostOwnerLeaveSubtitle", "l'owner ha lasciato il server"),
@@ -39,6 +41,10 @@ public class ConfigManager {
         WARNING_OWNER_TOO_FAR("warningOwnerTooFar", "Il player {PLAYER} si sta allontanando dall'arena"),
         INFO_PERSONAL_NOT_TOO_FAR("infoPersonalNotTooFar", "Sei tornato nell'arena"),
         INFO_OWNER_NOT_TOO_FAR("infoOwnerNotTooFar", "Il player {PLAYER} è tornato nell'arena"),
+
+        RAID_LOST_SOME_POINTS_SUBTITLE("raidLostSomePointsSubtitle", "Hai comunque vinto {POINTS} punti"),
+        RAID_LOST_NO_POINTS_SUBTITLE("raidLostNoPoints", "Completa più round per guadagnare punti"),
+        RAID_LOST_REASON_PREFIX("raidLostReasonPrefix", "Il RAID è stato persone perchè: "),
 
         ARENA_RADIUS("arenaRadius", 30),
         FRIENDS_RADIUS("friendsRadius", 30),
@@ -83,6 +89,7 @@ public class ConfigManager {
 
             Map<String, Object> config1 = new HashMap<>();
             config1.put("secondsToComplete", 100);
+            config1.put("pointsIfWinRound", 1);
             config1.put("mobsToSpawn", mobsToSpawn1);
             configs.add(config1);
 
@@ -91,6 +98,7 @@ public class ConfigManager {
 
             Map<String, Object> config2 = new HashMap<>();
             config2.put("secondsToComplete", 10);
+            config1.put("pointsIfWinRound", 2);
             config2.put("mobsToSpawn", mobsToSpawn2);
             configs.add(config2);
 
@@ -215,6 +223,7 @@ public class ConfigManager {
         List<Map<String, Object>> rawConfigs = getMapList(CONFIG_ITEMS.RAID_ROUND_CONFIGS);
         for(Map<String, Object> rawConfig : rawConfigs){
             int secondsToComplete = (Integer) rawConfig.get("secondsToComplete");
+            int pointsIfWinRound = (Integer) rawConfig.get("pointsIfWinRound");
             List<RaidRoundEntityConfig> entities = new ArrayList<>();
             if(rawConfig.get("mobsToSpawn") != null){
                 for(Map<String, Object> mobToSpawn : (List<Map<String, Object>>) rawConfig.get("mobsToSpawn")){
@@ -225,7 +234,7 @@ public class ConfigManager {
                     entities.add(new RaidRoundEntityConfig(type, name, howMany, onePerPlayer));
                 }
             }
-            configs.add(new RaidRoundConfig(entities, secondsToComplete));
+            configs.add(new RaidRoundConfig(entities, secondsToComplete, pointsIfWinRound));
         }
 
         return configs;

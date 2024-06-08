@@ -67,11 +67,9 @@ public class CommandHandler implements CommandExecutor, TabCompleter {
 
     private boolean setEnabledCommand(CommandSender sender, Command cmd, String label, String[] args, boolean enabled) {
         if (enabled) {
-            Announcement.getInstance(plugin).sendPrivateMessage(sender, "Scheduler started");
-            this.plugin.getTaskScheduler().start();
+            Announcement.getInstance(plugin).sendPrivateMessage(sender, "Use plugman to disable the plugin");
         } else {
-            Announcement.getInstance(plugin).sendPrivateMessage(sender, "Scheduler stopped");
-            this.plugin.getTaskScheduler().stop();
+            Announcement.getInstance(plugin).sendPrivateMessage(sender, "Use plugman to enabled the plugin");
         }
 
         return true;

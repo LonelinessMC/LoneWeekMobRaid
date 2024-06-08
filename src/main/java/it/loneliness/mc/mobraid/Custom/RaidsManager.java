@@ -117,7 +117,7 @@ public class RaidsManager extends PeriodicManagerRunner implements Listener {
         if (npcSubstringName != null)
             if (event.getNPC().getName().toLowerCase().contains(npcSubstringName)) {
                 Player p = event.getClicker();
-                if (p != null) { //TODO if enabled
+                if (p != null) {
                     giveNewRaidItem(p);
                 }
             }
