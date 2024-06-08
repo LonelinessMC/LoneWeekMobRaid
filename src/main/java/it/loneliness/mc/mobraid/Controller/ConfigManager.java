@@ -46,12 +46,23 @@ public class ConfigManager {
         RAID_LOST_NO_POINTS_SUBTITLE("raidLostNoPoints", "Completa più round per guadagnare punti"),
         RAID_LOST_REASON_PREFIX("raidLostReasonPrefix", "Il RAID è stato persone perchè: "),
 
+        TOO_CLOSE_TO_RAID("tooCloseToRaid", "C'è già un raid in corso vicino questa zona, allontanati e riprova!"),
+        ARENA_AREA_WITHOUT_AIR("arenaAreaWithoutAir", "Non puoi iniziare un raid qui, l'arena non ha abbastanza spazio libero (aria) per permettere l'inizio del raid, scegli un altro punto!"),
+        ARENA_AREA_WITHOUT_SOLID_BASE("arenaAreaWithoutSolidBase", "Non puoi iniziare un raid qui, l'arena non ha un pavimento di blocchi solidi per permettere l'inizio del raid, scegli un altro punto!"),
+        OWNER_ALREADY_IN_EXISTING_RAID("ownerAlreadyInExistingRaid", "Sei già in un raid!"),
+        HELPERS_ALREADY_IN_EXISTING_RAID("helpersInExistingRaid", "Uno dei partecipanti al raid ha un altro raid in corso!"),
+
+        COOLDOWN_GIVE_RAID_ITEM_MINUTES("cooldownGiveRaidItemMinutes", 30),
+        COOLDOWN_GIVE_RAID_ITEM_MESSAGE("cooldownGiveRaidItemMessage", "Puoi richiedere l'item una volta ogni {MINUTES} minuti"),
+        INVENTORY_FULL("tooCloseToRaid", "Il tuo inventario è pieno!"),
+
         ARENA_RADIUS("arenaRadius", 30),
         FRIENDS_RADIUS("friendsRadius", 30),
         INFRINGMENT_TIMEOUT_SECONDS("infringmentTimeoutSeconds", 10),
         SUMMON_RAID_ITEM_TYPE("summonRaidItemType", "zombie_head"),
         SUMMON_RAID_ITEM_NAME("summonRaidItemName", "RAID generator"),
         SUMMON_RAID_ITEM_LORE("summonRaidItemLore", List.of("Piazza questo item per iniziare un raid!", "")),
+
         RAID_ROUND_CONFIGS("raidRoundConfigs", getDefaultRaidRoundConfigs()),
         DEBUG("debug", true);
 
